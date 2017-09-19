@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="todoapp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="bootstrap-theme.min.css">
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="angular.js"></script>
+    <script>
+        var model = {
+            user: 'Adam'
+
+        }
+        var todoapp = angular.module('todoapp', []);
+        todoapp.run(function($http) {
+            $http.get('todo.json').then(function successCallback(response) {
+                console.log(response)
+                model.items = response.data;
+            })
+        })
+        todoapp.controller('todoCtrl', function($scope) {
+            $scope.todo = model;
+            $scope.incomplete = function() {
+                var count = 0;
+                angular.forEach($scope.todo.items, function(item) {
+                    if (!item.done) {
+                        count++;
+                    }
+                });
+                return count;
+            };
+            $scope.warningLevel = function() {
+                return $scope.incomplete() < 3 ? 'label-success' : 'label-warning';
+            };
+            $scope.addNewItem = function(actionText) {
+                $scope.todo.items.push({
+                    action: actionText,
+                    done: false
+                })
+            }
+        });
+        todoapp.filter('checkItems', function() {
+            return function(items, showComplete) {
+                var result = [];
+                angular.forEach(items, function(item) {
+                    if (item.done == false || showComplete == true) {
+                        result.push(item)
+                    }
+                });
+                return result;
+            }
+        })
+    </script>
+</head>
+
+<body ng-controller="todoCtrl">
+    <div class="page-header">
+        <h1>{{todo.user}}'s To Do List</h1>
+        <span class="label label-default" ng-hide="incomplete()==0" ng-class="warningLevel()">{{incomplete()}}</span>
+    </div>
+    <div class="panel">
+        <div class="input-group">
+            <input type="text" class="form-control" ng-model="actionText">
+            <span class="input-group-btn">
+                <button class="btn btn-default" ng-click="addNewItem(actionText)">Add</button>
+            </span>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Despriction</th>
+                    <th>Done</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="x in todo.items|checkItems:showComplete|orderBy:'action'">
+                    <td>{{x.action}}</td>
+                    <td><input type="checkbox" ng-model="x.done"></td>
+                    <td>{{x.done}}</td>
+                </tr>
+            </tbody>
+
+        </table>
+        <div class="checkbox-inline">
+            <label for="">
+                    <input type="checkbox" ng-model="showComplete">showComplete
+                </label>
+        </div>
+    </div>
+</body>
+
+</html>
